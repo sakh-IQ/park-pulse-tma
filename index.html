@@ -264,7 +264,46 @@
         const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID';
         const RANGE = 'Sheet1!A1:B10'; // Диапазон ячеек с данными
         
-        // Функция для получения данных из Google Таблицы
+        // Конфигурация погоды
+        const WEATHER_API_KEY = '32cfaea96a064767a9b58e0337b55ae4';
+        const WEATHER_CITY = 'Yuzhno-Sakhalinsk';
+        
+        // Функция для получения данных о погоде
+        async function fetchWeatherData() {
+            try {
+                const url = `https://api.openweathermap.org/data/2.5/weather?q=${WEATHER_CITY}&appid=${WEATHER_API_KEY}&units=metric&lang=ru`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.main && data.weather) {
+                    const temp = Math.round(data.main.temp);
+                    const description = data.weather[0].description;
+                    const weatherEmoji = getWeatherEmoji(data.weather[0].icon);
+                    
+                    return `${weatherEmoji} ${temp > 0 ? '+' : ''}${temp}° ${description}`;
+                }
+                return null;
+            } catch (error) {
+                console.error('Ошибка получения погоды:', error);
+                return null;
+            }
+        }
+        
+        // Функция для получения эмодзи погоды
+        function getWeatherEmoji(iconCode) {
+            const weatherEmojis = {
+                '01d': '☀️', '01n': '🌙',
+                '02d': '⛅', '02n': '☁️',
+                '03d': '☁️', '03n': '☁️',
+                '04d': '☁️', '04n': '☁️',
+                '09d': '🌧️', '09n': '🌧️',
+                '10d': '🌦️', '10n': '🌧️',
+                '11d': '⛈️', '11n': '⛈️',
+                '13d': '❄️', '13n': '❄️',
+                '50d': '🌫️', '50n': '🌫️'
+            };
+            return weatherEmojis[iconCode] || '🌤️';
+        }
         async function fetchDataFromGoogleSheets() {
             try {
                 const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=${RANGE}`;
@@ -298,6 +337,9 @@
             // Получаем данные из Google Таблицы
             const data = await fetchDataFromGoogleSheets();
             
+            // Получаем актуальную погоду
+            const weatherData = await fetchWeatherData();
+            
             if (data) {
                 // Обрабатываем данные из таблицы
                 // Предполагаем структуру: A1=метрика, B1=значение
@@ -321,7 +363,11 @@
                     if (metrics['parking']) {
                         document.getElementById('parking').textContent = metrics['parking'] + ' мест свободно';
                     }
-                    if (metrics['weather']) {
+                    
+                    // Погода - используем API или данные из таблицы
+                    if (weatherData) {
+                        document.getElementById('weather').textContent = weatherData;
+                    } else if (metrics['weather']) {
                         document.getElementById('weather').textContent = metrics['weather'];
                     }
                     if (metrics['pulse_percent']) {
@@ -356,7 +402,7 @@
         }
         
         // Функция для демонстрационных данных (если нет доступа к таблице)
-        function generateDemoData() {
+        async function generateDemoData() {
             const dailyVisitors = 1423 + Math.floor(Math.random() * 50) - 25;
             const currentVisitors = 287 + Math.floor(Math.random() * 40) - 20;
             const parkingSpots = 37 + Math.floor(Math.random() * 20) - 10;
@@ -367,6 +413,12 @@
             document.getElementById('parking').textContent = parkingSpots + ' мест свободно';
             document.getElementById('pulsePercent').textContent = pulsePercent + '%';
             document.getElementById('pulseFill').style.width = pulsePercent + '%';
+            
+            // Пытаемся получить актуальную погоду даже для демо
+            const weatherData = await fetchWeatherData();
+            if (weatherData) {
+                document.getElementById('weather').textContent = weatherData;
+            }
             
             const filled = Math.floor(pulsePercent / 100 * 15);
             const empty = 15 - filled;
