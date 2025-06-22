@@ -318,7 +318,6 @@
         // Функция для получения данных из конкретных ячеек Google Таблицы
         async function fetchDataFromGoogleSheets() {
             try {
-                // Получаем данные из диапазона B2:B6 (значения без заголовков)
                 const response = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B2:B6&headers=0`);
                 
                 if (response.ok) {
@@ -332,7 +331,6 @@
                     const keys = ['daily_visitors', 'current_visitors', 'parking', 'pulse_percent', 'max_capacity'];
                     
                     if (jsonData.table && jsonData.table.rows) {
-                        // Извлекаем данные из каждой строки (B2, B3, B4, B5, B6)
                         for (let i = 0; i < Math.min(5, jsonData.table.rows.length); i++) {
                             const row = jsonData.table.rows[i];
                             if (row && row.c && row.c[0]) {
@@ -364,7 +362,6 @@
             const btn = document.querySelector('.refresh-btn');
             const icon = document.querySelector('.refresh-icon');
             
-            // Анимация кнопки
             btn.style.transform = 'scale(0.95)';
             icon.style.transform = 'rotate(360deg)';
             btn.disabled = true;
@@ -375,106 +372,46 @@
             }, 300);
             
             try {
-                // Получаем данные из Google Таблицы и погоду параллельно
                 const [sheetData, weatherData] = await Promise.all([
                     fetchDataFromGoogleSheets(),
                     fetchWeatherData()
                 ]);
                 
-                // Обновляем данные из таблицы
                 if (sheetData) {
                     console.log('Обработка данных из таблицы:', sheetData);
                     
-                    // Посетители за день (B1)
-                    console.log('Обработка daily_visitors:', sheetData.daily_visitors);
-                    if (sheetData.daily_visitors !== null && sheetData.daily_visitors !== undefined) {
-                        const dailyValue = String(sheetData.daily_visitors).trim();
-                        console.log('daily_visitors как строка:', dailyValue);
-                        
-                        if (dailyValue === '' || dailyValue === 'неизвестно' || dailyValue === '-') {
-                            document.getElementById('dailyVisitors').textContent = 'неизвестно';
-                        } else if (isNaN(dailyValue)) {
-                            document.getElementById('dailyVisitors').textContent = dailyValue;
-                        } else {
-                            document.getElementById('dailyVisitors').textContent = Number(dailyValue).toLocaleString();
-                        }
-                    } else {
-                        document.getElementById('dailyVisitors').textContent = 'неизвестно';
-                    }
-                    
-                    // Сейчас в парке (B2)
-                    console.log('Обработка current_visitors:', sheetData.current_visitors);
-                    if (sheetData.current_visitors !== null && sheetData.current_visitors !== undefined) {
-                        const currentValue = String(sheetData.current_visitors).trim();
-                        console.log('current_visitors как строка:', currentValue);
-                        
-                        if (currentValue === '' || currentValue === 'неизвестно' || currentValue === '-') {
-                            document.getElementById('currentVisitors').textContent = 'неизвестно';
-                        } else if (isNaN(currentValue)) {
-                            document.getElementById('currentVisitors').textContent = currentValue;
-                        } else {
-                            document.getElementById('currentVisitors').textContent = Number(currentValue).toLocaleString() + ' человек';
-                        }
-                    } else {
-                        document.getElementById('currentVisitors').textContent = 'неизвестно';
-                    }
-                    
-                    // Парковка (B3)
-                    console.log('Обработка parking:', sheetData.parking);
-                    if (sheetData.parking !== null && sheetData.parking !== undefined) {
-                        const parkingValue = String(sheetData.parking).trim();
-                        console.log('parking как строка:', parkingValue);
-                        
-                        if (parkingValue === '' || parkingValue === 'неизвестно' || parkingValue === '-' || parkingValue === 'нет' || parkingValue === 'недоступно') {
-                            document.getElementById('parking').textContent = parkingValue || 'неизвестно';
-                        } else if (isNaN(parkingValue)) {
-                            document.getElementById('parking').textContent = parkingValue;
-                        } else {
-                            document.getElementById('parking').textContent = Number(parkingValue).toLocaleString() + ' мест свободно';
-                        }
-                    } else {
-                        document.getElementById('parking').textContent = 'неизвестно';
-                    }
-                    
-                    // Пульс парка (B4)
-                    console.log('Обработка pulse_percent:', sheetData.pulse_percent);
-                    if (sheetData.pulse_percent !== null && sheetData.pulse_percent !== undefined) {
-                        const pulseValue = String(sheetData.pulse_percent).trim();
-                        console.log('pulse_percent как строка:', pulseValue);
-                        
-                        if (pulseValue === '' || pulseValue === 'неизвестно' || pulseValue === '-') {
-                            document.getElementById('pulsePercent').textContent = 'неизвестно';
-                            document.getElementById('pulseFill').style.width = '0%';
-                            document.getElementById('pulseVisual').textContent = '[ ░░░░░░░░░░░░░░░ ]';
-                        } else {
-                            const pulsePercent = parseInt(pulseValue);
-                            console.log('pulse_percent как число:', pulsePercent);
-                            
-                            if (!isNaN(pulsePercent)) {
-                                const clampedPercent = Math.max(0, Math.min(100, pulsePercent));
-                                document.getElementById('pulsePercent').textContent = clampedPercent + '%';
-                                document.getElementById('pulseFill').style.width = clampedPercent + '%';
-                                
-                                // Обновляем визуальный индикатор
-                                const filled = Math.floor(clampedPercent / 100 * 15);
-                                const empty = 15 - filled;
-                                const visual = '[ ' + '▓'.repeat(filled) + '░'.repeat(empty) + ' ]';
-                                document.getElementById('pulseVisual').textContent = visual;
-                            } else {
-                                // Если не число, показываем как есть
-                                document.getElementById('pulsePercent').textContent = pulseValue;
-                                document.getElementById('pulseFill').style.width = '0%';
-                                document.getElementById('pulseVisual').textContent = '[ ░░░░░░░░░░░░░░░ ]';
-                            }
-                        }
-                    } else {
-                        document.getElementById('pulsePercent').textContent = 'неизвестно';
+                    // Посетители за день
+                    const dailyValue = sheetData.daily_visitors ? String(sheetData.daily_visitors).trim() : 'неизвестно';
+                    document.getElementById('dailyVisitors').textContent =
+                        isNaN(dailyValue) ? dailyValue : Number(dailyValue).toLocaleString();
+
+                    // Сейчас в парке
+                    const currentValue = sheetData.current_visitors ? String(sheetData.current_visitors).trim() : 'неизвестно';
+                    document.getElementById('currentVisitors').textContent =
+                        isNaN(currentValue) ? currentValue : Number(currentValue).toLocaleString() + ' человек';
+
+                    // Парковка
+                    const parkingValue = sheetData.parking ? String(sheetData.parking).trim() : 'неизвестно';
+                    document.getElementById('parking').textContent =
+                        isNaN(parkingValue) ? parkingValue : Number(parkingValue).toLocaleString() + ' мест свободно';
+
+                    // Пульс парка
+                    const pulseValue = sheetData.pulse_percent ? String(sheetData.pulse_percent).trim() : 'неизвестно';
+                    if (isNaN(pulseValue)) {
+                        document.getElementById('pulsePercent').textContent = pulseValue;
                         document.getElementById('pulseFill').style.width = '0%';
                         document.getElementById('pulseVisual').textContent = '[ ░░░░░░░░░░░░░░░ ]';
+                    } else {
+                        const pulsePercent = Math.max(0, Math.min(100, parseInt(pulseValue)));
+                        document.getElementById('pulsePercent').textContent = pulsePercent + '%';
+                        document.getElementById('pulseFill').style.width = pulsePercent + '%';
+                        const filled = Math.floor(pulsePercent / 100 * 15);
+                        const empty = 15 - filled;
+                        const visual = '[ ' + '▓'.repeat(filled) + '░'.repeat(empty) + ' ]';
+                        document.getElementById('pulseVisual').textContent = visual;
                     }
                 }
-                
-                // Обновляем погоду из API
+
                 if (weatherData) {
                     document.getElementById('weather').textContent = weatherData;
                 } else {
@@ -483,7 +420,6 @@
                 
             } catch (error) {
                 console.error('Ошибка обновления данных:', error);
-                // Показываем сообщение об ошибке
                 document.getElementById('dailyVisitors').textContent = 'Ошибка загрузки';
                 document.getElementById('currentVisitors').textContent = 'Ошибка загрузки';
                 document.getElementById('parking').textContent = 'Ошибка загрузки';
@@ -491,10 +427,8 @@
                 document.getElementById('pulsePercent').textContent = 'Ошибка';
             }
             
-            // Обновляем время
             const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
-                          now.getMinutes().toString().padStart(2, '0');
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
             document.getElementById('updateTime').textContent = timeStr;
             
             btn.disabled = false;
