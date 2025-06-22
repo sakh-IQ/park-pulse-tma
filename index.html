@@ -192,6 +192,24 @@
             letter-spacing: 1px;
         }
 
+        .pulse-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% { 
+                transform: scale(1.2);
+                filter: brightness(1.3);
+            }
+        }
+
         .error-message {
             color: #ff6b6b;
             font-size: 12px;
@@ -246,11 +264,11 @@
         
         <div class="pulse-section">
             <div class="pulse-header">
-                <span>🔥</span>
+                <svg class="pulse-icon" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
                 <div class="pulse-title">Пульс парка:</div>
             </div>
-            
-            <div class="pulse-visual" id="pulseVisual">Загрузка...</div>
             
             <div class="progress-container">
                 <div class="progress-bar">
@@ -400,15 +418,10 @@
                     if (isNaN(pulseValue)) {
                         document.getElementById('pulsePercent').textContent = pulseValue;
                         document.getElementById('pulseFill').style.width = '0%';
-                        document.getElementById('pulseVisual').textContent = '[ ░░░░░░░░░░░░░░░ ]';
                     } else {
                         const pulsePercent = Math.max(0, Math.min(100, parseInt(pulseValue)));
                         document.getElementById('pulsePercent').textContent = pulsePercent + '%';
                         document.getElementById('pulseFill').style.width = pulsePercent + '%';
-                        const filled = Math.floor(pulsePercent / 100 * 15);
-                        const empty = 15 - filled;
-                        const visual = '[ ' + '▓'.repeat(filled) + '░'.repeat(empty) + ' ]';
-                        document.getElementById('pulseVisual').textContent = visual;
                     }
                 }
 
