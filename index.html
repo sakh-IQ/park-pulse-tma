@@ -311,8 +311,8 @@
         // Функция для получения данных из конкретных ячеек Google Таблицы
         async function fetchDataFromGoogleSheets() {
             try {
-                // Получаем данные из конкретных ячеек B1:B5
-                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B1:B5`;
+                // Получаем данные из конкретных ячеек B1:B6
+                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B1:B6`;
                 const response = await fetch(url);
                 const text = await response.text();
                 
@@ -322,10 +322,10 @@
                 
                 // Извлекаем значения из ячеек B1, B2, B3, B4, B5
                 const data = {
-                    daily_visitors: rows[0] && rows[0].c[0] ? rows[0].c[0].v : null,
-                    current_visitors: rows[1] && rows[1].c[0] ? rows[1].c[0].v : null,
-                    parking: rows[2] && rows[2].c[0] ? rows[2].c[0].v : null,
-                    pulse_percent: rows[4] && rows[4].c[0] ? rows[4].c[0].v : null  // B5 вместо B4
+                    daily_visitors: rows[0] && rows[0].c[0] ? rows[0].c[0].v : null,  // B1
+                    current_visitors: rows[1] && rows[1].c[0] ? rows[1].c[0].v : null, // B2  
+                    parking: rows[3] && rows[3].c[0] ? rows[3].c[0].v : null,         // B4 (строка 4)
+                    pulse_percent: rows[4] && rows[4].c[0] ? rows[4].c[0].v : null    // B5 (строка 5)
                 };
                 
                 return data;
