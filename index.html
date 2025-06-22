@@ -191,6 +191,13 @@
             margin: 10px 0;
             letter-spacing: 1px;
         }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 12px;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -308,40 +315,57 @@
             return weatherEmojis[iconCode] || '🌤️';
         }
         
+        // Функция для безопасного извлечения значения из ответа Google Sheets
+        function extractValue(text) {
+            try {
+                const jsonData = JSON.parse(text.substring(47).slice(0, -2));
+                
+                if (jsonData.table && jsonData.table.rows && jsonData.table.rows[0] && 
+                    jsonData.table.rows[0].c && jsonData.table.rows[0].c[0]) {
+                    
+                    const cell = jsonData.table.rows[0].c[0];
+                    // Возвращаем значение или форматированное значение
+                    return cell.f || cell.v || null;
+                }
+                return null;
+            } catch (error) {
+                console.error('Ошибка парсинга данных:', error);
+                return null;
+            }
+        }
+        
         // Функция для получения данных из конкретных ячеек Google Таблицы
         async function fetchDataFromGoogleSheets() {
             try {
                 // Получаем данные из каждой ячейки отдельно
-                const [b1Response, b2Response, b3Response, b4Response] = await Promise.all([
+                const responses = await Promise.allSettled([
                     fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B1`),
                     fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B2`),
                     fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B3`),
                     fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B4`)
                 ]);
                 
-                // Функция для извлечения значения из ответа Google Sheets
-                const extractValue = async (response) => {
-                    try {
-                        const text = await response.text();
-                        const jsonData = JSON.parse(text.substring(47).slice(0, -2));
-                        return jsonData.table.rows[0] && jsonData.table.rows[0].c && jsonData.table.rows[0].c[0] 
-                            ? jsonData.table.rows[0].c[0].v 
-                            : null;
-                    } catch {
-                        return null;
-                    }
-                };
+                const data = {};
+                const keys = ['daily_visitors', 'current_visitors', 'parking', 'pulse_percent'];
                 
-                const data = {
-                    daily_visitors: await extractValue(b1Response),
-                    current_visitors: await extractValue(b2Response),
-                    parking: await extractValue(b3Response),
-                    pulse_percent: await extractValue(b4Response)
-                };
+                for (let i = 0; i < responses.length; i++) {
+                    if (responses[i].status === 'fulfilled') {
+                        try {
+                            const text = await responses[i].value.text();
+                            data[keys[i]] = extractValue(text);
+                        } catch (error) {
+                            console.error(`Ошибка получения ${keys[i]}:`, error);
+                            data[keys[i]] = null;
+                        }
+                    } else {
+                        console.error(`Не удалось загрузить ${keys[i]}:`, responses[i].reason);
+                        data[keys[i]] = null;
+                    }
+                }
                 
                 return data;
             } catch (error) {
-                console.error('Ошибка получения данных из таблицы:', error);
+                console.error('Общая ошибка получения данных из таблицы:', error);
                 return null;
             }
         }
@@ -371,38 +395,78 @@
                 // Обновляем данные из таблицы
                 if (sheetData) {
                     // Посетители за день (B1)
-                    if (sheetData.daily_visitors !== null) {
-                        document.getElementById('dailyVisitors').textContent = sheetData.daily_visitors;
+                    if (sheetData.daily_visitors !== null && sheetData.daily_visitors !== undefined) {
+                        const dailyValue = String(sheetData.daily_visitors).trim();
+                        if (dailyValue === '' || dailyValue === 'неизвестно' || dailyValue === '-') {
+                            document.getElementById('dailyVisitors').textContent = 'неизвестно';
+                        } else if (isNaN(dailyValue)) {
+                            document.getElementById('dailyVisitors').textContent = dailyValue;
+                        } else {
+                            document.getElementById('dailyVisitors').textContent = Number(dailyValue).toLocaleString();
+                        }
+                    } else {
+                        document.getElementById('dailyVisitors').textContent = 'неизвестно';
                     }
                     
                     // Сейчас в парке (B2)
-                    if (sheetData.current_visitors !== null) {
-                        document.getElementById('currentVisitors').textContent = sheetData.current_visitors + ' человек';
+                    if (sheetData.current_visitors !== null && sheetData.current_visitors !== undefined) {
+                        const currentValue = String(sheetData.current_visitors).trim();
+                        if (currentValue === '' || currentValue === 'неизвестно' || currentValue === '-') {
+                            document.getElementById('currentVisitors').textContent = 'неизвестно';
+                        } else if (isNaN(currentValue)) {
+                            document.getElementById('currentVisitors').textContent = currentValue;
+                        } else {
+                            document.getElementById('currentVisitors').textContent = Number(currentValue).toLocaleString() + ' человек';
+                        }
+                    } else {
+                        document.getElementById('currentVisitors').textContent = 'неизвестно';
                     }
                     
                     // Парковка (B3)
-                    const parkingValue = sheetData.parking;
-                    if (parkingValue === null || parkingValue === undefined) {
-                        document.getElementById('parking').textContent = 'неизвестно';
-                    } else if (parkingValue === '-' || parkingValue === 'нет' || parkingValue === 'недоступно' || parkingValue === 'неизвестно') {
-                        document.getElementById('parking').textContent = parkingValue;
+                    if (sheetData.parking !== null && sheetData.parking !== undefined) {
+                        const parkingValue = String(sheetData.parking).trim();
+                        if (parkingValue === '' || parkingValue === 'неизвестно' || parkingValue === '-' || parkingValue === 'нет' || parkingValue === 'недоступно') {
+                            document.getElementById('parking').textContent = parkingValue || 'неизвестно';
+                        } else if (isNaN(parkingValue)) {
+                            document.getElementById('parking').textContent = parkingValue;
+                        } else {
+                            document.getElementById('parking').textContent = Number(parkingValue).toLocaleString() + ' мест свободно';
+                        }
                     } else {
-                        document.getElementById('parking').textContent = parkingValue + ' мест свободно';
+                        document.getElementById('parking').textContent = 'неизвестно';
                     }
                     
                     // Пульс парка (B4)
-                    if (sheetData.pulse_percent !== null) {
-                        const pulsePercent = parseInt(sheetData.pulse_percent);
-                        if (!isNaN(pulsePercent)) {
-                            document.getElementById('pulsePercent').textContent = pulsePercent + '%';
-                            document.getElementById('pulseFill').style.width = pulsePercent + '%';
-                            
-                            // Обновляем визуальный индикатор
-                            const filled = Math.floor(pulsePercent / 100 * 15);
-                            const empty = 15 - filled;
-                            const visual = '[ ' + '▓'.repeat(filled) + '░'.repeat(empty) + ' ]';
-                            document.getElementById('pulseVisual').textContent = visual;
+                    if (sheetData.pulse_percent !== null && sheetData.pulse_percent !== undefined) {
+                        const pulseValue = String(sheetData.pulse_percent).trim();
+                        
+                        if (pulseValue === '' || pulseValue === 'неизвестно' || pulseValue === '-') {
+                            document.getElementById('pulsePercent').textContent = 'неизвестно';
+                            document.getElementById('pulseFill').style.width = '0%';
+                            document.getElementById('pulseVisual').textContent = '[ ░░░░░░░░░░░░░░░ ]';
+                        } else {
+                            const pulsePercent = parseInt(pulseValue);
+                            if (!isNaN(pulsePercent)) {
+                                const clampedPercent = Math.max(0, Math.min(100, pulsePercent));
+                                document.getElementById('pulsePercent').textContent = clampedPercent + '%';
+                                document.getElementById('pulseFill').style.width = clampedPercent + '%';
+                                
+                                // Обновляем визуальный индикатор
+                                const filled = Math.floor(clampedPercent / 100 * 15);
+                                const empty = 15 - filled;
+                                const visual = '[ ' + '▓'.repeat(filled) + '░'.repeat(empty) + ' ]';
+                                document.getElementById('pulseVisual').textContent = visual;
+                            } else {
+                                // Если не число, показываем как есть
+                                document.getElementById('pulsePercent').textContent = pulseValue;
+                                document.getElementById('pulseFill').style.width = '0%';
+                                document.getElementById('pulseVisual').textContent = '[ ░░░░░░░░░░░░░░░ ]';
+                            }
                         }
+                    } else {
+                        document.getElementById('pulsePercent').textContent = 'неизвестно';
+                        document.getElementById('pulseFill').style.width = '0%';
+                        document.getElementById('pulseVisual').textContent = '[ ░░░░░░░░░░░░░░░ ]';
                     }
                 }
                 
