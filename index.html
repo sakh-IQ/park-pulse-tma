@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пульс парка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .park-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .park-subtitle {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.2s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-emoji {
+            font-size: 24px;
+            min-width: 32px;
+        }
+        
+        .stat-content {
+            flex: 1;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 2px;
+        }
+        
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .pulse-section {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .pulse-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .pulse-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .progress-container {
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            width: 44%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .update-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 auto;
+        }
+        
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+        
+        .refresh-icon {
+            transition: transform 0.3s ease;
+        }
+        
+        .refresh-btn:hover .refresh-icon {
+            transform: rotate(180deg);
+        }
+        
+        .pulse-visual {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            text-align: center;
+            margin: 10px 0;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="park-title">
+                <span>🌳</span>
+                Парк имени Ю. Гагарина
+            </div>
+            <div class="park-subtitle">сегодня</div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-emoji">👣</div>
+                <div class="stat-content">
+                    <div class="stat-label">Посетителей за день</div>
+                    <div class="stat-value" id="dailyVisitors">1423</div>
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-emoji">🕒</div>
+                <div class="stat-content">
+                    <div class="stat-label">Сейчас в парке</div>
+                    <div class="stat-value" id="currentVisitors">287 человек</div>
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-emoji">☀️</div>
+                <div class="stat-content">
+                    <div class="stat-label">Погода</div>
+                    <div class="stat-value" id="weather">+21° Солнечно</div>
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-emoji">🅿️</div>
+                <div class="stat-content">
+                    <div class="stat-label">Парковка</div>
+                    <div class="stat-value" id="parking">37 мест свободно</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="pulse-section">
+            <div class="pulse-header">
+                <span>🔥</span>
+                <div class="pulse-title">Пульс парка:</div>
+            </div>
+            
+            <div class="pulse-visual">[ ▓▓▓▓▓░░░░░░░░░ ]</div>
+            
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="pulseFill"></div>
+                </div>
+                <div class="progress-text" id="pulsePercent">44%</div>
+            </div>
+            
+            <div class="update-info">
+                <span>Обновлено: <span id="updateTime">12:45</span></span>
+            </div>
+        </div>
+        
+        <button class="refresh-btn" onclick="refreshData()">
+            <span class="refresh-icon">↻</span>
+            Обновить
+        </button>
+    </div>
+
+    <script>
+        // Конфигурация Google Sheets
+        // ЗАМЕНИТЕ НА СВОЙ ID ТАБЛИЦЫ
+        const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID';
+        const RANGE = 'Sheet1!A1:B10'; // Диапазон ячеек с данными
+        
+        // Функция для получения данных из Google Таблицы
+        async function fetchDataFromGoogleSheets() {
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=${RANGE}`;
+                const response = await fetch(url);
+                const text = await response.text();
+                
+                // Парсим Google Visualization API ответ
+                const jsonData = JSON.parse(text.substring(47).slice(0, -2));
+                return jsonData.table.rows;
+            } catch (error) {
+                console.error('Ошибка получения данных:', error);
+                return null;
+            }
+        }
+        
+        // Функция обновления данных
+        async function refreshData() {
+            const btn = document.querySelector('.refresh-btn');
+            const icon = document.querySelector('.refresh-icon');
+            
+            // Анимация кнопки
+            btn.style.transform = 'scale(0.95)';
+            icon.style.transform = 'rotate(360deg)';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.style.transform = 'scale(1)';
+                icon.style.transform = 'rotate(0deg)';
+            }, 300);
+            
+            // Получаем данные из Google Таблицы
+            const data = await fetchDataFromGoogleSheets();
+            
+            if (data) {
+                // Обрабатываем данные из таблицы
+                // Предполагаем структуру: A1=метрика, B1=значение
+                try {
+                    const metrics = {};
+                    data.forEach(row => {
+                        if (row.c && row.c[0] && row.c[1]) {
+                            const key = row.c[0].v;
+                            const value = row.c[1].v;
+                            metrics[key] = value;
+                        }
+                    });
+                    
+                    // Обновляем интерфейс
+                    if (metrics['daily_visitors']) {
+                        document.getElementById('dailyVisitors').textContent = metrics['daily_visitors'];
+                    }
+                    if (metrics['current_visitors']) {
+                        document.getElementById('currentVisitors').textContent = metrics['current_visitors'] + ' человек';
+                    }
+                    if (metrics['parking']) {
+                        document.getElementById('parking').textContent = metrics['parking'] + ' мест свободно';
+                    }
+                    if (metrics['weather']) {
+                        document.getElementById('weather').textContent = metrics['weather'];
+                    }
+                    if (metrics['pulse_percent']) {
+                        const pulsePercent = parseInt(metrics['pulse_percent']);
+                        document.getElementById('pulsePercent').textContent = pulsePercent + '%';
+                        document.getElementById('pulseFill').style.width = pulsePercent + '%';
+                        
+                        // Обновляем визуальный индикатор
+                        const filled = Math.floor(pulsePercent / 100 * 15);
+                        const empty = 15 - filled;
+                        const visual = '[ ' + '▓'.repeat(filled) + '░'.repeat(empty) + ' ]';
+                        document.querySelector('.pulse-visual').textContent = visual;
+                    }
+                    
+                } catch (parseError) {
+                    console.error('Ошибка обработки данных:', parseError);
+                    // Fallback на демо-данные
+                    generateDemoData();
+                }
+            } else {
+                // Если не удалось получить данные, используем демо
+                generateDemoData();
+            }
+            
+            // Обновляем время
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
+                          now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('updateTime').textContent = timeStr;
+            
+            btn.disabled = false;
+        }
+        
+        // Функция для демонстрационных данных (если нет доступа к таблице)
+        function generateDemoData() {
+            const dailyVisitors = 1423 + Math.floor(Math.random() * 50) - 25;
+            const currentVisitors = 287 + Math.floor(Math.random() * 40) - 20;
+            const parkingSpots = 37 + Math.floor(Math.random() * 20) - 10;
+            const pulsePercent = Math.max(20, Math.min(80, 44 + Math.floor(Math.random() * 20) - 10));
+            
+            document.getElementById('dailyVisitors').textContent = dailyVisitors;
+            document.getElementById('currentVisitors').textContent = currentVisitors + ' человек';
+            document.getElementById('parking').textContent = parkingSpots + ' мест свободно';
+            document.getElementById('pulsePercent').textContent = pulsePercent + '%';
+            document.getElementById('pulseFill').style.width = pulsePercent + '%';
+            
+            const filled = Math.floor(pulsePercent / 100 * 15);
+            const empty = 15 - filled;
+            const visual = '[ ' + '▓'.repeat(filled) + '░'.repeat(empty) + ' ]';
+            document.querySelector('.pulse-visual').textContent = visual;
+        }
+        
+        // Автообновление каждые 2 минуты
+        setInterval(refreshData, 120000);
+        
+        // Telegram WebApp API интеграция
+        if (window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            tg.expand();
+            
+            // Применяем тему Telegram
+            if (tg.themeParams.bg_color) {
+                document.body.style.background = `linear-gradient(135deg, ${tg.themeParams.bg_color} 0%, ${tg.themeParams.secondary_bg_color || '#764ba2'} 100%)`;
+            }
+        }
+        
+        // Анимация при загрузке
+        window.addEventListener('load', () => {
+            const items = document.querySelectorAll('.stat-item');
+            items.forEach((item, index) => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    item.style.transition = 'all 0.5s ease';
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+            
+            // Первоначальная загрузка данных
+            setTimeout(refreshData, 1000);
+        });
+    </script>
+</body>
+</html>
