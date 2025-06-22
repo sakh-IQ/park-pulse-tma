@@ -311,21 +311,32 @@
         // Функция для получения данных из конкретных ячеек Google Таблицы
         async function fetchDataFromGoogleSheets() {
             try {
-                // Получаем данные из конкретных ячеек B1:B5
-                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B1:B5`;
-                const response = await fetch(url);
-                const text = await response.text();
+                // Получаем данные из каждой ячейки отдельно
+                const [b1Response, b2Response, b3Response, b4Response] = await Promise.all([
+                    fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B1`),
+                    fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B2`),
+                    fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B3`),
+                    fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B4`)
+                ]);
                 
-                // Парсим Google Visualization API ответ
-                const jsonData = JSON.parse(text.substring(47).slice(0, -2));
-                const rows = jsonData.table.rows;
+                // Функция для извлечения значения из ответа Google Sheets
+                const extractValue = async (response) => {
+                    try {
+                        const text = await response.text();
+                        const jsonData = JSON.parse(text.substring(47).slice(0, -2));
+                        return jsonData.table.rows[0] && jsonData.table.rows[0].c && jsonData.table.rows[0].c[0] 
+                            ? jsonData.table.rows[0].c[0].v 
+                            : null;
+                    } catch {
+                        return null;
+                    }
+                };
                 
-                // Извлекаем значения из ячеек B1, B2, B3, B4, B5
                 const data = {
-                    daily_visitors: rows[0] && rows[0].c && rows[0].c[0] ? rows[0].c[0].v : null,  // B1
-                    current_visitors: rows[1] && rows[1].c && rows[1].c[0] ? rows[1].c[0].v : null, // B2  
-                    parking: rows[2] && rows[2].c && rows[2].c[0] ? rows[2].c[0].v : 'пусто',       // B3
-                    pulse_percent: rows[3] && rows[3].c && rows[3].c[0] ? rows[3].c[0].v : null    // B4
+                    daily_visitors: await extractValue(b1Response),
+                    current_visitors: await extractValue(b2Response),
+                    parking: await extractValue(b3Response),
+                    pulse_percent: await extractValue(b4Response)
                 };
                 
                 return data;
@@ -370,15 +381,13 @@
                     }
                     
                     // Парковка (B3)
-                    if (sheetData.parking !== null) {
-                        const parkingValue = sheetData.parking;
-                        if (parkingValue === '-' || parkingValue === 'нет' || parkingValue === 'недоступно' || parkingValue === 'неизвестно' || parkingValue === 'пусто') {
-                            document.getElementById('parking').textContent = parkingValue === 'пусто' ? 'неизвестно' : parkingValue;
-                        } else {
-                            document.getElementById('parking').textContent = parkingValue + ' мест свободно';
-                        }
-                    } else {
+                    const parkingValue = sheetData.parking;
+                    if (parkingValue === null || parkingValue === undefined) {
                         document.getElementById('parking').textContent = 'неизвестно';
+                    } else if (parkingValue === '-' || parkingValue === 'нет' || parkingValue === 'недоступно' || parkingValue === 'неизвестно') {
+                        document.getElementById('parking').textContent = parkingValue;
+                    } else {
+                        document.getElementById('parking').textContent = parkingValue + ' мест свободно';
                     }
                     
                     // Пульс парка (B4)
