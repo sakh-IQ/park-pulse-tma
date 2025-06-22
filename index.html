@@ -361,7 +361,12 @@
                         document.getElementById('currentVisitors').textContent = metrics['current_visitors'] + ' человек';
                     }
                     if (metrics['parking']) {
-                        document.getElementById('parking').textContent = metrics['parking'] + ' мест свободно';
+                        const parkingValue = metrics['parking'];
+                        if (parkingValue === '-' || parkingValue === 'нет' || parkingValue === 'недоступно') {
+                            document.getElementById('parking').textContent = parkingValue;
+                        } else {
+                            document.getElementById('parking').textContent = parkingValue + ' мест свободно';
+                        }
                     }
                     
                     // Погода - используем API или данные из таблицы
