@@ -213,7 +213,7 @@
             </div>
             
             <div class="stat-item">
-                <div class="stat-emoji">🚶‍♂️</div>
+                <div class="stat-emoji">🚶</div>
                 <div class="stat-content">
                     <div class="stat-label">Сейчас в парке</div>
                     <div class="stat-value" id="currentVisitors">Загрузка...</div>
@@ -311,8 +311,8 @@
         // Функция для получения данных из конкретных ячеек Google Таблицы
         async function fetchDataFromGoogleSheets() {
             try {
-                // Получаем данные из конкретных ячеек B1:B6
-                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B1:B6`;
+                // Получаем данные из конкретных ячеек B1:B5
+                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B1:B5`;
                 const response = await fetch(url);
                 const text = await response.text();
                 
@@ -324,8 +324,8 @@
                 const data = {
                     daily_visitors: rows[0] && rows[0].c[0] ? rows[0].c[0].v : null,  // B1
                     current_visitors: rows[1] && rows[1].c[0] ? rows[1].c[0].v : null, // B2  
-                    parking: rows[2] && rows[2].c[0] ? rows[2].c[0].v : null,         // B4 (строка 4)
-                    pulse_percent: rows[3] && rows[3].c[0] ? rows[3].c[0].v : null    // B5 (строка 5)
+                    parking: rows[2] && rows[2].c[0] ? rows[2].c[0].v : null,         // B3
+                    pulse_percent: rows[3] && rows[3].c[0] ? rows[3].c[0].v : null    // B4
                 };
                 
                 return data;
@@ -372,7 +372,7 @@
                     // Парковка (B3)
                     if (sheetData.parking !== null) {
                         const parkingValue = sheetData.parking;
-                        if (parkingValue === '-' || parkingValue === 'нет' || parkingValue === 'недоступно') {
+                        if (parkingValue === '-' || parkingValue === 'нет' || parkingValue === 'недоступно' || parkingValue === 'неизвестно') {
                             document.getElementById('parking').textContent = parkingValue;
                         } else {
                             document.getElementById('parking').textContent = parkingValue + ' мест свободно';
