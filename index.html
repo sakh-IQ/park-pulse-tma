@@ -126,7 +126,7 @@
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #4ade80, #22c55e);
-            width: 44%;
+            width: 0%;
             border-radius: 4px;
             transition: width 0.5s ease;
         }
@@ -171,6 +171,11 @@
             transform: translateY(0);
         }
         
+        .refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
         .refresh-icon {
             transition: transform 0.3s ease;
         }
@@ -203,7 +208,7 @@
                 <div class="stat-emoji">👣</div>
                 <div class="stat-content">
                     <div class="stat-label">Посетителей за день</div>
-                    <div class="stat-value" id="dailyVisitors">1423</div>
+                    <div class="stat-value" id="dailyVisitors">Загрузка...</div>
                 </div>
             </div>
             
@@ -211,7 +216,7 @@
                 <div class="stat-emoji">🕒</div>
                 <div class="stat-content">
                     <div class="stat-label">Сейчас в парке</div>
-                    <div class="stat-value" id="currentVisitors">287 человек</div>
+                    <div class="stat-value" id="currentVisitors">Загрузка...</div>
                 </div>
             </div>
             
@@ -219,7 +224,7 @@
                 <div class="stat-emoji">☀️</div>
                 <div class="stat-content">
                     <div class="stat-label">Погода</div>
-                    <div class="stat-value" id="weather">+21° Солнечно</div>
+                    <div class="stat-value" id="weather">Загрузка...</div>
                 </div>
             </div>
             
@@ -227,7 +232,7 @@
                 <div class="stat-emoji">🅿️</div>
                 <div class="stat-content">
                     <div class="stat-label">Парковка</div>
-                    <div class="stat-value" id="parking">37 мест свободно</div>
+                    <div class="stat-value" id="parking">Загрузка...</div>
                 </div>
             </div>
         </div>
@@ -238,17 +243,17 @@
                 <div class="pulse-title">Пульс парка:</div>
             </div>
             
-            <div class="pulse-visual">[ ▓▓▓▓▓░░░░░░░░░ ]</div>
+            <div class="pulse-visual" id="pulseVisual">Загрузка...</div>
             
             <div class="progress-container">
                 <div class="progress-bar">
                     <div class="progress-fill" id="pulseFill"></div>
                 </div>
-                <div class="progress-text" id="pulsePercent">44%</div>
+                <div class="progress-text" id="pulsePercent">Загрузка...</div>
             </div>
             
             <div class="update-info">
-                <span>Обновлено: <span id="updateTime">12:45</span></span>
+                <span>Обновлено: <span id="updateTime">--:--</span></span>
             </div>
         </div>
         
@@ -260,9 +265,7 @@
 
     <script>
         // Конфигурация Google Sheets
-        // ЗАМЕНИТЕ НА СВОЙ ID ТАБЛИЦЫ
         const SHEET_ID = '1z8_66-n2YOVqK62CspR6wZ3Qggbn2YihPsKjcZwWzf8';
-        const RANGE = 'Sheet1!A1:B5'; // Диапазон ячеек с данными
         
         // Конфигурация погоды
         const WEATHER_API_KEY = '32cfaea96a064767a9b58e0337b55ae4';
@@ -304,17 +307,30 @@
             };
             return weatherEmojis[iconCode] || '🌤️';
         }
+        
+        // Функция для получения данных из конкретных ячеек Google Таблицы
         async function fetchDataFromGoogleSheets() {
             try {
-                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=${RANGE}`;
+                // Получаем данные из конкретных ячеек B1:B4
+                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B1:B4`;
                 const response = await fetch(url);
                 const text = await response.text();
                 
                 // Парсим Google Visualization API ответ
                 const jsonData = JSON.parse(text.substring(47).slice(0, -2));
-                return jsonData.table.rows;
+                const rows = jsonData.table.rows;
+                
+                // Извлекаем значения из ячеек B1, B2, B3, B4
+                const data = {
+                    daily_visitors: rows[0] && rows[0].c[0] ? rows[0].c[0].v : null,
+                    current_visitors: rows[1] && rows[1].c[0] ? rows[1].c[0].v : null,
+                    parking: rows[2] && rows[2].c[0] ? rows[2].c[0].v : null,
+                    pulse_percent: rows[3] && rows[3].c[0] ? rows[3].c[0].v : null
+                };
+                
+                return data;
             } catch (error) {
-                console.error('Ошибка получения данных:', error);
+                console.error('Ошибка получения данных из таблицы:', error);
                 return null;
             }
         }
@@ -334,34 +350,28 @@
                 icon.style.transform = 'rotate(0deg)';
             }, 300);
             
-            // Получаем данные из Google Таблицы
-            const data = await fetchDataFromGoogleSheets();
-            
-            // Получаем актуальную погоду
-            const weatherData = await fetchWeatherData();
-            
-            if (data) {
-                // Обрабатываем данные из таблицы
-                // Предполагаем структуру: A1=метрика, B1=значение
-                try {
-                    const metrics = {};
-                    data.forEach(row => {
-                        if (row.c && row.c[0] && row.c[1]) {
-                            const key = row.c[0].v;
-                            const value = row.c[1].v;
-                            metrics[key] = value;
-                        }
-                    });
+            try {
+                // Получаем данные из Google Таблицы и погоду параллельно
+                const [sheetData, weatherData] = await Promise.all([
+                    fetchDataFromGoogleSheets(),
+                    fetchWeatherData()
+                ]);
+                
+                // Обновляем данные из таблицы
+                if (sheetData) {
+                    // Посетители за день (B1)
+                    if (sheetData.daily_visitors !== null) {
+                        document.getElementById('dailyVisitors').textContent = sheetData.daily_visitors;
+                    }
                     
-                    // Обновляем интерфейс
-                    if (metrics['daily_visitors']) {
-                        document.getElementById('dailyVisitors').textContent = metrics['daily_visitors'];
+                    // Сейчас в парке (B2)
+                    if (sheetData.current_visitors !== null) {
+                        document.getElementById('currentVisitors').textContent = sheetData.current_visitors + ' человек';
                     }
-                    if (metrics['current_visitors']) {
-                        document.getElementById('currentVisitors').textContent = metrics['current_visitors'] + ' человек';
-                    }
-                    if (metrics['parking']) {
-                        const parkingValue = metrics['parking'];
+                    
+                    // Парковка (B3)
+                    if (sheetData.parking !== null) {
+                        const parkingValue = sheetData.parking;
                         if (parkingValue === '-' || parkingValue === 'нет' || parkingValue === 'недоступно') {
                             document.getElementById('parking').textContent = parkingValue;
                         } else {
@@ -369,32 +379,37 @@
                         }
                     }
                     
-                    // Погода - используем API или данные из таблицы
-                    if (weatherData) {
-                        document.getElementById('weather').textContent = weatherData;
-                    } else if (metrics['weather']) {
-                        document.getElementById('weather').textContent = metrics['weather'];
+                    // Пульс парка (B4)
+                    if (sheetData.pulse_percent !== null) {
+                        const pulsePercent = parseInt(sheetData.pulse_percent);
+                        if (!isNaN(pulsePercent)) {
+                            document.getElementById('pulsePercent').textContent = pulsePercent + '%';
+                            document.getElementById('pulseFill').style.width = pulsePercent + '%';
+                            
+                            // Обновляем визуальный индикатор
+                            const filled = Math.floor(pulsePercent / 100 * 15);
+                            const empty = 15 - filled;
+                            const visual = '[ ' + '▓'.repeat(filled) + '░'.repeat(empty) + ' ]';
+                            document.getElementById('pulseVisual').textContent = visual;
+                        }
                     }
-                    if (metrics['pulse_percent']) {
-                        const pulsePercent = parseInt(metrics['pulse_percent']);
-                        document.getElementById('pulsePercent').textContent = pulsePercent + '%';
-                        document.getElementById('pulseFill').style.width = pulsePercent + '%';
-                        
-                        // Обновляем визуальный индикатор
-                        const filled = Math.floor(pulsePercent / 100 * 15);
-                        const empty = 15 - filled;
-                        const visual = '[ ' + '▓'.repeat(filled) + '░'.repeat(empty) + ' ]';
-                        document.querySelector('.pulse-visual').textContent = visual;
-                    }
-                    
-                } catch (parseError) {
-                    console.error('Ошибка обработки данных:', parseError);
-                    // Fallback на демо-данные
-                    generateDemoData();
                 }
-            } else {
-                // Если не удалось получить данные, используем демо
-                generateDemoData();
+                
+                // Обновляем погоду из API
+                if (weatherData) {
+                    document.getElementById('weather').textContent = weatherData;
+                } else {
+                    document.getElementById('weather').textContent = 'Погода недоступна';
+                }
+                
+            } catch (error) {
+                console.error('Ошибка обновления данных:', error);
+                // Показываем сообщение об ошибке
+                document.getElementById('dailyVisitors').textContent = 'Ошибка загрузки';
+                document.getElementById('currentVisitors').textContent = 'Ошибка загрузки';
+                document.getElementById('parking').textContent = 'Ошибка загрузки';
+                document.getElementById('weather').textContent = 'Ошибка загрузки';
+                document.getElementById('pulsePercent').textContent = 'Ошибка';
             }
             
             // Обновляем время
@@ -404,31 +419,6 @@
             document.getElementById('updateTime').textContent = timeStr;
             
             btn.disabled = false;
-        }
-        
-        // Функция для демонстрационных данных (если нет доступа к таблице)
-        async function generateDemoData() {
-            const dailyVisitors = 1423 + Math.floor(Math.random() * 50) - 25;
-            const currentVisitors = 287 + Math.floor(Math.random() * 40) - 20;
-            const parkingSpots = 37 + Math.floor(Math.random() * 20) - 10;
-            const pulsePercent = Math.max(20, Math.min(80, 44 + Math.floor(Math.random() * 20) - 10));
-            
-            document.getElementById('dailyVisitors').textContent = dailyVisitors;
-            document.getElementById('currentVisitors').textContent = currentVisitors + ' человек';
-            document.getElementById('parking').textContent = parkingSpots + ' мест свободно';
-            document.getElementById('pulsePercent').textContent = pulsePercent + '%';
-            document.getElementById('pulseFill').style.width = pulsePercent + '%';
-            
-            // Пытаемся получить актуальную погоду даже для демо
-            const weatherData = await fetchWeatherData();
-            if (weatherData) {
-                document.getElementById('weather').textContent = weatherData;
-            }
-            
-            const filled = Math.floor(pulsePercent / 100 * 15);
-            const empty = 15 - filled;
-            const visual = '[ ' + '▓'.repeat(filled) + '░'.repeat(empty) + ' ]';
-            document.querySelector('.pulse-visual').textContent = visual;
         }
         
         // Автообновление каждые 2 минуты
@@ -459,7 +449,7 @@
                 }, index * 100);
             });
             
-            // Первоначальная загрузка данных
+            // Первоначальная загрузка данных через 1 секунду
             setTimeout(refreshData, 1000);
         });
     </script>
