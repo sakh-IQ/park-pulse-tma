@@ -146,7 +146,13 @@
             opacity: 0.7;
         }
         
-        .refresh-btn {
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .refresh-btn, .parking-btn {
             background: rgba(255, 255, 255, 0.2);
             border: none;
             color: white;
@@ -159,24 +165,23 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            margin: 0 auto;
         }
         
-        .refresh-btn:hover {
+        .refresh-btn:hover, .parking-btn:hover {
             background: rgba(255, 255, 255, 0.3);
             transform: translateY(-1px);
         }
         
-        .refresh-btn:active {
+        .refresh-btn:active, .parking-btn:active {
             transform: translateY(0);
         }
         
-        .refresh-btn:disabled {
+        .refresh-btn:disabled, .parking-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
         
-        .refresh-icon {
+        .refresh-icon, .parking-icon {
             transition: transform 0.3s ease;
         }
         
@@ -252,14 +257,6 @@
                     <div class="stat-value" id="weather">Загрузка...</div>
                 </div>
             </div>
-            
-            <div class="stat-item">
-                <div class="stat-emoji">🅿️</div>
-                <div class="stat-content">
-                    <div class="stat-label">Парковка</div>
-                    <div class="stat-value" id="parking">Загрузка...</div>
-                </div>
-            </div>
         </div>
         
         <div class="pulse-section">
@@ -282,10 +279,16 @@
             </div>
         </div>
         
-        <button class="refresh-btn" onclick="refreshData()">
-            <span class="refresh-icon">↻</span>
-            Обновить
-        </button>
+        <div class="button-group">
+            <button class="refresh-btn" onclick="refreshData()">
+                <span class="refresh-icon">↻</span>
+                Обновить
+            </button>
+            <button class="parking-btn" onclick="openParkingSnapshot()">
+                <span class="parking-icon">🅿️</span>
+                Парковка
+            </button>
+        </div>
     </div>
 
     <script>
@@ -333,20 +336,17 @@
             return weatherEmojis[iconCode] || '🌤️';
         }
         
-        // Функция для получения данных из конкретных ячеек Google Таблицы
+        // Функция для получения данных из Google Sheets
         async function fetchDataFromGoogleSheets() {
             try {
                 const response = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B2:B6&headers=0`);
                 
                 if (response.ok) {
                     const text = await response.text();
-                    console.log('Ответ от Google Sheets:', text.substring(0, 500) + '...');
-                    
                     const jsonData = JSON.parse(text.substring(47).slice(0, -2));
-                    console.log('Парсированные данные:', jsonData);
                     
                     const data = {};
-                    const keys = ['daily_visitors', 'current_visitors', 'parking', 'pulse_percent', 'max_capacity'];
+                    const keys = ['daily_visitors', 'current_visitors', 'parking_url', 'pulse_percent', 'max_capacity'];
                     
                     if (jsonData.table && jsonData.table.rows) {
                         for (let i = 0; i < Math.min(5, jsonData.table.rows.length); i++) {
@@ -355,15 +355,12 @@
                                 const cell = row.c[0];
                                 const value = cell.f || cell.v || null;
                                 data[keys[i]] = value;
-                                console.log(`${keys[i]} (B${i+2}):`, value);
                             } else {
                                 data[keys[i]] = null;
-                                console.log(`${keys[i]} (B${i+2}): пустая ячейка`);
                             }
                         }
                     }
                     
-                    console.log('Финальные данные:', data);
                     return data;
                 } else {
                     console.error('Ошибка HTTP:', response.status, response.statusText);
@@ -372,6 +369,20 @@
             } catch (error) {
                 console.error('Общая ошибка получения данных из таблицы:', error);
                 return null;
+            }
+        }
+        
+        // Функция для открытия скриншота парковки
+        function openParkingSnapshot() {
+            const parkingUrl = document.getElementById('parkingUrl').value;
+            if (parkingUrl && parkingUrl.startsWith('https://')) {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.openLink(parkingUrl);
+                } else {
+                    window.open(parkingUrl, '_blank');
+                }
+            } else {
+                alert('Скриншот парковки недоступен');
             }
         }
         
@@ -396,8 +407,6 @@
                 ]);
                 
                 if (sheetData) {
-                    console.log('Обработка данных из таблицы:', sheetData);
-                    
                     // Посетители за день
                     const dailyValue = sheetData.daily_visitors ? String(sheetData.daily_visitors).trim() : 'неизвестно';
                     document.getElementById('dailyVisitors').textContent =
@@ -408,10 +417,8 @@
                     document.getElementById('currentVisitors').textContent =
                         isNaN(currentValue) ? currentValue : Number(currentValue).toLocaleString() + ' человек';
 
-                    // Парковка
-                    const parkingValue = sheetData.parking ? String(sheetData.parking).trim() : 'неизвестно';
-                    document.getElementById('parking').textContent =
-                        isNaN(parkingValue) ? parkingValue : Number(parkingValue).toLocaleString() + ' мест свободно';
+                    // URL скриншота парковки (скрытое поле для хранения)
+                    document.getElementById('parkingUrl').value = sheetData.parking_url || '';
 
                     // Пульс парка
                     const pulseValue = sheetData.pulse_percent ? String(sheetData.pulse_percent).trim() : 'неизвестно';
@@ -435,9 +442,9 @@
                 console.error('Ошибка обновления данных:', error);
                 document.getElementById('dailyVisitors').textContent = 'Ошибка загрузки';
                 document.getElementById('currentVisitors').textContent = 'Ошибка загрузки';
-                document.getElementById('parking').textContent = 'Ошибка загрузки';
                 document.getElementById('weather').textContent = 'Ошибка загрузки';
                 document.getElementById('pulsePercent').textContent = 'Ошибка';
+                document.getElementById('parkingUrl').value = '';
             }
             
             const now = new Date();
@@ -456,7 +463,6 @@
             tg.ready();
             tg.expand();
             
-            // Применяем тему Telegram
             if (tg.themeParams.bg_color) {
                 document.body.style.background = `linear-gradient(135deg, ${tg.themeParams.bg_color} 0%, ${tg.themeParams.secondary_bg_color || '#764ba2'} 100%)`;
             }
@@ -475,9 +481,9 @@
                 }, index * 100);
             });
             
-            // Первоначальная загрузка данных через 1 секунду
             setTimeout(refreshData, 1000);
         });
     </script>
+    <input type="hidden" id="parkingUrl">
 </body>
 </html>
