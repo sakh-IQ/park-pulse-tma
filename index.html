@@ -11,8 +11,6 @@
             box-sizing: border-box;
         }
         
-        // Функция для тестирования URL убрана
-        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -223,15 +221,6 @@
             margin-top: 5px;
             opacity: 0.8;
         }
-
-        .debug-info {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-size: 12px;
-            font-family: monospace;
-        }
     </style>
 </head>
 <body>
@@ -300,8 +289,6 @@
                 Парковка
             </button>
         </div>
-
-        <!-- Отладочная информация убрана -->
     </div>
 
     <script>
@@ -314,22 +301,6 @@
         
         // Переменная для хранения URL парковки
         let parkingUrl = '';
-        
-        // Отладочный режим (включить для диагностики)
-        const DEBUG_MODE = false;
-        
-        function showDebugInfo() {
-            if (DEBUG_MODE) {
-                document.getElementById('debugInfo').style.display = 'block';
-            }
-        }
-        
-        function updateDebugInfo(url, error = null) {
-            if (DEBUG_MODE) {
-                document.getElementById('debugParkingUrl').textContent = url || 'пусто';
-                document.getElementById('debugError').textContent = error || 'нет';
-            }
-        }
         
         // Функция для получения данных о погоде
         async function fetchWeatherData() {
@@ -348,7 +319,6 @@
                 return null;
             } catch (error) {
                 console.error('Ошибка получения погоды:', error);
-                updateDebugInfo(parkingUrl, `Погода: ${error.message}`);
                 return null;
             }
         }
@@ -394,10 +364,9 @@
             }
         }
         
-        // Исправленная функция для получения данных из Google Sheets
+        // Функция для получения данных из Google Sheets
         async function fetchDataFromGoogleSheets() {
             try {
-                // Получаем данные из диапазона B2:B6 (включая все нужные ячейки)
                 // Добавляем timestamp для избежания кэширования
                 const timestamp = new Date().getTime();
                 const response = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B2:B6&headers=0&t=${timestamp}`);
@@ -409,8 +378,6 @@
                     const data = {};
                     const keys = ['daily_visitors', 'current_visitors', 'parking_url', 'pulse_percent', 'max_capacity'];
                     
-                    console.log('Raw Google Sheets data:', jsonData);
-                    
                     if (jsonData.table && jsonData.table.rows) {
                         for (let i = 0; i < Math.min(5, jsonData.table.rows.length); i++) {
                             const row = jsonData.table.rows[i];
@@ -418,7 +385,6 @@
                                 const cell = row.c[0];
                                 const value = cell.f || cell.v || null;
                                 data[keys[i]] = value;
-                                console.log(`${keys[i]}: ${value}`);
                             } else {
                                 data[keys[i]] = null;
                             }
@@ -427,35 +393,25 @@
                     
                     return data;
                 } else {
-                    const error = `HTTP error: ${response.status} ${response.statusText}`;
-                    console.error(error);
-                    updateDebugInfo(parkingUrl, error);
+                    console.error('Ошибка HTTP:', response.status, response.statusText);
                     return null;
                 }
             } catch (error) {
                 console.error('Общая ошибка получения данных из таблицы:', error);
-                updateDebugInfo(parkingUrl, `Sheets: ${error.message}`);
                 return null;
             }
         }
         
-        // Исправленная функция открытия скриншота парковки
+        // Функция открытия скриншота парковки
         function openParkingSnapshot() {
             console.log('[TMA] Попытка открыть parkingUrl:', parkingUrl);
-            updateDebugInfo(parkingUrl, null);
             
             if (!parkingUrl) {
-                const error = 'URL парковки не загружен или пуст';
-                console.error(error);
-                updateDebugInfo(parkingUrl, error);
                 alert('Скриншот парковки недоступен. URL не загружен.');
                 return;
             }
             
             if (!parkingUrl.startsWith('https://')) {
-                const error = 'Неправильный формат URL';
-                console.error(error);
-                updateDebugInfo(parkingUrl, error);
                 alert('Неправильный URL скриншота парковки');
                 return;
             }
@@ -470,7 +426,6 @@
                 }
             } catch (error) {
                 console.error('Ошибка при открытии URL:', error);
-                updateDebugInfo(parkingUrl, `Open: ${error.message}`);
                 alert('Ошибка при открытии скриншота парковки');
             }
         }
@@ -491,7 +446,6 @@
             
             // Очищаем старое значение
             parkingUrl = '';
-            updateDebugInfo('', 'Обновление данных...');
             
             try {
                 const [sheetData, weatherData, parkingUrlData] = await Promise.all([
@@ -518,7 +472,6 @@
                         parkingUrl = sheetData.parking_url ? String(sheetData.parking_url).trim() : '';
                     }
                     console.log('[TMA] Загруженный parkingUrl:', parkingUrl);
-                    updateDebugInfo(parkingUrl, null);
 
                     // Пульс парка
                     const pulseValue = sheetData.pulse_percent ? String(sheetData.pulse_percent).trim() : 'неизвестно';
@@ -530,8 +483,6 @@
                         document.getElementById('pulsePercent').textContent = pulsePercent + '%';
                         document.getElementById('pulseFill').style.width = pulsePercent + '%';
                     }
-                } else {
-                    updateDebugInfo(parkingUrl, 'Не удалось загрузить данные из таблицы');
                 }
 
                 if (weatherData) {
@@ -542,7 +493,6 @@
                 
             } catch (error) {
                 console.error('Ошибка обновления данных:', error);
-                updateDebugInfo(parkingUrl, `Update: ${error.message}`);
                 document.getElementById('dailyVisitors').textContent = 'Ошибка загрузки';
                 document.getElementById('currentVisitors').textContent = 'Ошибка загрузки';
                 document.getElementById('weather').textContent = 'Ошибка загрузки';
