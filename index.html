@@ -375,7 +375,9 @@
         async function fetchDataFromGoogleSheets() {
             try {
                 // Получаем данные из диапазона B2:B6 (включая все нужные ячейки)
-                const response = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B2:B6&headers=0`);
+                // Добавляем timestamp для избежания кэширования
+                const timestamp = new Date().getTime();
+                const response = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B2:B6&headers=0&t=${timestamp}`);
                 
                 if (response.ok) {
                     const text = await response.text();
