@@ -1,489 +1,95 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Пульс парка</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: white;
-        }
-        
-        .container {
-            max-width: 400px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        
-        .park-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .park-subtitle {
-            font-size: 14px;
-            opacity: 0.8;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-        
-        .stat-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: transform 0.2s ease;
-        }
-        
-        .stat-item:hover {
-            transform: translateY(-2px);
-        }
-        
-        .stat-emoji {
-            font-size: 24px;
-            min-width: 32px;
-        }
-        
-        .stat-content {
-            flex: 1;
-        }
-        
-        .stat-label {
-            font-size: 13px;
-            opacity: 0.8;
-            margin-bottom: 2px;
-        }
-        
-        .stat-value {
-            font-size: 16px;
-            font-weight: 600;
-        }
-        
-        .pulse-section {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .pulse-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .pulse-title {
-            font-size: 16px;
-            font-weight: 600;
-        }
-        
-        .progress-container {
-            margin-bottom: 10px;
-        }
-        
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 5px;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4ade80, #22c55e);
-            width: 0%;
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-        
-        .progress-text {
-            text-align: center;
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-        
-        .update-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            opacity: 0.7;
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-        
-        .refresh-btn, .parking-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 25px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .refresh-btn:hover, .parking-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
-        }
-        
-        .refresh-btn:active, .parking-btn:active {
-            transform: translateY(0);
-        }
-        
-        .refresh-btn:disabled, .parking-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .refresh-icon, .parking-icon {
-            transition: transform 0.3s ease;
-        }
-        
-        .refresh-btn:hover .refresh-icon {
-            transform: rotate(180deg);
-        }
-        
-        .pulse-visual {
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            text-align: center;
-            margin: 10px 0;
-            letter-spacing: 1px;
-        }
-
-        .pulse-icon {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-            animation: pulse 2s ease-in-out infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { 
-                transform: scale(1);
-                filter: brightness(1);
-            }
-            50% { 
-                transform: scale(1.2);
-                filter: brightness(1.3);
-            }
-        }
-
-        .error-message {
-            color: #ff6b6b;
-            font-size: 12px;
-            margin-top: 5px;
-            opacity: 0.8;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Пульс парка</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: white;
+      padding: 20px;
+    }
+    .container { max-width: 400px; margin: auto; text-align: center; }
+    .stat { margin: 10px 0; }
+    .button { padding: 10px 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 20px; color: white; cursor: pointer; }
+    .button:hover { background: rgba(255,255,255,0.3); }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="park-title">
-                <span>🌳</span>
-                Парк имени Ю. Гагарина
-            </div>
-            <div class="park-subtitle">сегодня</div>
-        </div>
-        
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-emoji">👣</div>
-                <div class="stat-content">
-                    <div class="stat-label">Посетителей за день</div>
-                    <div class="stat-value" id="dailyVisitors">Загрузка...</div>
-                </div>
-            </div>
-            
-            <div class="stat-item">
-                <div class="stat-emoji">🚶</div>
-                <div class="stat-content">
-                    <div class="stat-label">Сейчас в парке</div>
-                    <div class="stat-value" id="currentVisitors">Загрузка...</div>
-                </div>
-            </div>
-            
-            <div class="stat-item">
-                <div class="stat-emoji">☀️</div>
-                <div class="stat-content">
-                    <div class="stat-label">Погода</div>
-                    <div class="stat-value" id="weather">Загрузка...</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="pulse-section">
-            <div class="pulse-header">
-                <svg class="pulse-icon" viewBox="0 0 24 24">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                </svg>
-                <div class="pulse-title">Пульс парка:</div>
-            </div>
-            
-            <div class="progress-container">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="pulseFill"></div>
-                </div>
-                <div class="progress-text" id="pulsePercent">Загрузка...</div>
-            </div>
-            
-            <div class="update-info">
-                <span>Обновлено: <span id="updateTime">--:--</span></span>
-            </div>
-        </div>
-        
-        <div class="button-group">
-            <button class="refresh-btn" onclick="refreshData()">
-                <span class="refresh-icon">↻</span>
-                Обновить
-            </button>
-            <button class="parking-btn" onclick="openParkingSnapshot()">
-                <span class="parking-icon">🅿️</span>
-                Парковка
-            </button>
-        </div>
-    </div>
+  <div class="container">
+    <h1>🌳 Пульс парка</h1>
+    <div class="stat">👣 За день: <span id="dailyVisitors">--</span></div>
+    <div class="stat">🚶 Сейчас: <span id="currentVisitors">--</span></div>
+    <div class="stat">☀️ Погода: <span id="weather">--</span></div>
+    <button class="button" onclick="refreshData()">🔄 Обновить</button>
+    <button class="button" onclick="openParkingSnapshot()">🅿️ Парковка</button>
+  </div>
+  <input type="hidden" id="parkingUrl">
 
-    <script>
-        // Конфигурация Google Sheets
-        const SHEET_ID = '1z8_66-n2YOVqK62CspR6wZ3Qggbn2YihPsKjcZwWzf8';
-        
-        // Конфигурация погоды
-        const WEATHER_API_KEY = '32cfaea96a064767a9b58e0337b55ae4';
-        const WEATHER_CITY = 'Yuzhno-Sakhalinsk';
-        
-        // Функция для получения данных о погоде
-        async function fetchWeatherData() {
-            try {
-                const url = `https://api.openweathermap.org/data/2.5/weather?q=${WEATHER_CITY}&appid=${WEATHER_API_KEY}&units=metric&lang=ru`;
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (data.main && data.weather) {
-                    const temp = Math.round(data.main.temp);
-                    const description = data.weather[0].description;
-                    const weatherEmoji = getWeatherEmoji(data.weather[0].icon);
-                    
-                    return `${weatherEmoji} ${temp > 0 ? '+' : ''}${temp}° ${description}`;
-                }
-                return null;
-            } catch (error) {
-                console.error('Ошибка получения погоды:', error);
-                return null;
-            }
-        }
-        
-        // Функция для получения эмодзи погоды
-        function getWeatherEmoji(iconCode) {
-            const weatherEmojis = {
-                '01d': '☀️', '01n': '🌙',
-                '02d': '⛅', '02n': '☁️',
-                '03d': '☁️', '03n': '☁️',
-                '04d': '☁️', '04n': '☁️',
-                '09d': '🌧️', '09n': '🌧️',
-                '10d': '🌦️', '10n': '🌧️',
-                '11d': '⛈️', '11n': '⛈️',
-                '13d': '❄️', '13n': '❄️',
-                '50d': '🌫️', '50n': '🌫️'
-            };
-            return weatherEmojis[iconCode] || '🌤️';
-        }
-        
-        // Функция для получения данных из Google Sheets
-        async function fetchDataFromGoogleSheets() {
-            try {
-                const response = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B2:B6&headers=0`);
-                
-                if (response.ok) {
-                    const text = await response.text();
-                    const jsonData = JSON.parse(text.substring(47).slice(0, -2));
-                    
-                    const data = {};
-                    const keys = ['daily_visitors', 'current_visitors', 'parking_url', 'pulse_percent', 'max_capacity'];
-                    
-                    if (jsonData.table && jsonData.table.rows) {
-                        for (let i = 0; i < Math.min(5, jsonData.table.rows.length); i++) {
-                            const row = jsonData.table.rows[i];
-                            if (row && row.c && row.c[0]) {
-                                const cell = row.c[0];
-                                const value = cell.f || cell.v || null;
-                                data[keys[i]] = value;
-                            } else {
-                                data[keys[i]] = null;
-                            }
-                        }
-                    }
-                    
-                    return data;
-                } else {
-                    console.error('Ошибка HTTP:', response.status, response.statusText);
-                    return null;
-                }
-            } catch (error) {
-                console.error('Общая ошибка получения данных из таблицы:', error);
-                return null;
-            }
-        }
-        
-        // Функция для открытия скриншота парковки
-        function openParkingSnapshot() {
-            const parkingUrl = document.getElementById('parkingUrl').value;
-            if (parkingUrl && parkingUrl.startsWith('https://')) {
-                if (window.Telegram && window.Telegram.WebApp) {
-                    window.Telegram.WebApp.openLink(parkingUrl);
-                } else {
-                    window.open(parkingUrl, '_blank');
-                }
-            } else {
-                alert('Скриншот парковки недоступен');
-            }
-        }
-        
-        // Функция обновления данных
-        async function refreshData() {
-            const btn = document.querySelector('.refresh-btn');
-            const icon = document.querySelector('.refresh-icon');
-            
-            btn.style.transform = 'scale(0.95)';
-            icon.style.transform = 'rotate(360deg)';
-            btn.disabled = true;
-            
-            setTimeout(() => {
-                btn.style.transform = 'scale(1)';
-                icon.style.transform = 'rotate(0deg)';
-            }, 300);
-            
-            try {
-                const [sheetData, weatherData] = await Promise.all([
-                    fetchDataFromGoogleSheets(),
-                    fetchWeatherData()
-                ]);
-                
-                if (sheetData) {
-                    // Посетители за день
-                    const dailyValue = sheetData.daily_visitors ? String(sheetData.daily_visitors).trim() : 'неизвестно';
-                    document.getElementById('dailyVisitors').textContent =
-                        isNaN(dailyValue) ? dailyValue : Number(dailyValue).toLocaleString();
+  <script>
+    const SHEET_ID = '1z8_66-n2YOVqK62CspR6wZ3Qggbn2YihPsKjcZwWzf8';
+    const WEATHER_API_KEY = 'ТВОЙ_API_КЛЮЧ_ПОГОДЫ';
+    const WEATHER_CITY = 'Yuzhno-Sakhalinsk';
 
-                    // Сейчас в парке
-                    const currentValue = sheetData.current_visitors ? String(sheetData.current_visitors).trim() : 'неизвестно';
-                    document.getElementById('currentVisitors').textContent =
-                        isNaN(currentValue) ? currentValue : Number(currentValue).toLocaleString() + ' человек';
+    async function fetchWeather() {
+      try {
+        const url = `https://api.openweathermap.org/data/2.5/weather?q=${WEATHER_CITY}&appid=${WEATHER_API_KEY}&units=metric&lang=ru`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const temp = Math.round(data.main.temp);
+        const desc = data.weather[0].description;
+        return `${temp > 0 ? '+' : ''}${temp}° ${desc}`;
+      } catch {
+        return 'н/д';
+      }
+    }
 
-                    // URL скриншота парковки (скрытое поле для хранения)
-                    document.getElementById('parkingUrl').value = sheetData.parking_url || '';
+    async function fetchDataFromGoogleSheets() {
+      try {
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&range=B2:B4&headers=0`;
+        const res = await fetch(url);
+        const text = await res.text();
+        const json = JSON.parse(text.substring(47).slice(0, -2));
+        const rows = json.table.rows;
 
-                    // Пульс парка
-                    const pulseValue = sheetData.pulse_percent ? String(sheetData.pulse_percent).trim() : 'неизвестно';
-                    if (isNaN(pulseValue)) {
-                        document.getElementById('pulsePercent').textContent = pulseValue;
-                        document.getElementById('pulseFill').style.width = '0%';
-                    } else {
-                        const pulsePercent = Math.max(0, Math.min(100, parseInt(pulseValue)));
-                        document.getElementById('pulsePercent').textContent = pulsePercent + '%';
-                        document.getElementById('pulseFill').style.width = pulsePercent + '%';
-                    }
-                }
+        const dailyVisitors = rows[0]?.c[0]?.v || '--';
+        const currentVisitors = rows[1]?.c[0]?.v || '--';
+        const parkingUrl = rows[2]?.c[0]?.v || '';
 
-                if (weatherData) {
-                    document.getElementById('weather').textContent = weatherData;
-                } else {
-                    document.getElementById('weather').textContent = 'Погода недоступна';
-                }
-                
-            } catch (error) {
-                console.error('Ошибка обновления данных:', error);
-                document.getElementById('dailyVisitors').textContent = 'Ошибка загрузки';
-                document.getElementById('currentVisitors').textContent = 'Ошибка загрузки';
-                document.getElementById('weather').textContent = 'Ошибка загрузки';
-                document.getElementById('pulsePercent').textContent = 'Ошибка';
-                document.getElementById('parkingUrl').value = '';
-            }
-            
-            const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-            document.getElementById('updateTime').textContent = timeStr;
-            
-            btn.disabled = false;
+        return { dailyVisitors, currentVisitors, parkingUrl };
+      } catch {
+        return { dailyVisitors: '--', currentVisitors: '--', parkingUrl: '' };
+      }
+    }
+
+    async function refreshData() {
+      const [sheetData, weather] = await Promise.all([fetchDataFromGoogleSheets(), fetchWeather()]);
+
+      document.getElementById('dailyVisitors').textContent = sheetData.dailyVisitors;
+      document.getElementById('currentVisitors').textContent = sheetData.currentVisitors;
+      document.getElementById('weather').textContent = weather;
+      document.getElementById('parkingUrl').value = sheetData.parkingUrl;
+
+      console.log('Parking URL:', sheetData.parkingUrl);
+    }
+
+    function openParkingSnapshot() {
+      const url = document.getElementById('parkingUrl').value;
+      if (url && url.startsWith('https://')) {
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.openLink(url);
+        } else {
+          window.open(url, '_blank');
         }
-        
-        // Автообновление каждые 2 минуты
-        setInterval(refreshData, 120000);
-        
-        // Telegram WebApp API интеграция
-        if (window.Telegram && window.Telegram.WebApp) {
-            const tg = window.Telegram.WebApp;
-            tg.ready();
-            tg.expand();
-            
-            if (tg.themeParams.bg_color) {
-                document.body.style.background = `linear-gradient(135deg, ${tg.themeParams.bg_color} 0%, ${tg.themeParams.secondary_bg_color || '#764ba2'} 100%)`;
-            }
-        }
-        
-        // Анимация при загрузке
-        window.addEventListener('load', () => {
-            const items = document.querySelectorAll('.stat-item');
-            items.forEach((item, index) => {
-                item.style.opacity = '0';
-                item.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    item.style.transition = 'all 0.5s ease';
-                    item.style.opacity = '1';
-                    item.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
-            
-            setTimeout(refreshData, 1000);
-        });
-    </script>
-    <input type="hidden" id="parkingUrl">
+      } else {
+        alert('Скриншот парковки недоступен');
+      }
+    }
+
+    refreshData();
+    setInterval(refreshData, 120000);
+  </script>
 </body>
 </html>
