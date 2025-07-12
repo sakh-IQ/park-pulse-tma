@@ -419,6 +419,7 @@
 
                     // URL скриншота парковки (скрытое поле для хранения)
                     document.getElementById('parkingUrl').value = sheetData.parking_url || '';
+                    console.log('[TMA] Загруженный parkingUrl:', document.getElementById('parkingUrl').value);
 
                     // Пульс парка
                     const pulseValue = sheetData.pulse_percent ? String(sheetData.pulse_percent).trim() : 'неизвестно';
